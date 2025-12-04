@@ -159,6 +159,44 @@ def _upscale_handler(
     return out_image, pretty_json(meta)
 
 
+def make_img2img_handler(model_choice, pipes):
+    """Return handler for img2img generation."""
+
+    def handler(input_image, prompt, negative, strength, steps, guidance, seed):
+        return _img2img_handler(
+            model_choice,
+            pipes,
+            input_image,
+            prompt,
+            negative,
+            strength,
+            steps,
+            guidance,
+            seed,
+        )
+
+    return handler
+
+
+def make_txt2img_handler(model_choice, pipes):
+    """Return handler for txt2img generation."""
+
+    def handler(prompt, negative, steps, guidance, width, height, seed):
+        return _txt2img_handler(
+            model_choice,
+            pipes,
+            prompt,
+            negative,
+            steps,
+            guidance,
+            width,
+            height,
+            seed,
+        )
+
+    return handler
+
+
 def build_ui(txt2img_pipes: dict, img2img_pipes: dict) -> gr.Blocks:
     """Build the entire Gradio UI."""
     with gr.Blocks() as demo:
@@ -178,19 +216,11 @@ def build_ui(txt2img_pipes: dict, img2img_pipes: dict) -> gr.Blocks:
         )
 
         txt_controls = build_txt2img_tab(
-            handler=lambda model_name, *args: _txt2img_handler(
-                model_name,
-                txt2img_pipes,
-                *args,
-            ),
+            make_txt2img_handler(model_choice, txt2img_pipes),
         )
 
         img_controls = build_img2img_tab(
-            handler=lambda model_name, *args: _img2img_handler(
-                model_name,
-                img2img_pipes,
-                *args,
-            ),
+            make_img2img_handler(model_choice, img2img_pipes),
         )
 
         build_upscaler_tab(
