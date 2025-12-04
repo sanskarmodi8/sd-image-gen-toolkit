@@ -33,8 +33,7 @@ def build_img2img_tab(handler: Callable[..., Tuple[Any, dict]]) -> Img2ImgContro
     """
     with gr.Tab("Image → Image"):
         with gr.Row():
-            # Left: Controls
-            with gr.Column(scale=1):
+            with gr.Column():
                 input_image = gr.Image(
                     label="Input Image",
                     type="numpy",
@@ -93,8 +92,7 @@ the prompt more strictly. "
 
                 generate_button = gr.Button("Generate")
 
-            # Right: Output preview
-            with gr.Column(scale=2):
+            with gr.Column():
                 out_image = gr.Image(
                     label="Output",
                     type="pil",

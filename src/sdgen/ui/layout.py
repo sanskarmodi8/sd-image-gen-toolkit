@@ -216,11 +216,11 @@ def build_ui(txt2img_pipes: dict, img2img_pipes: dict) -> gr.Blocks:
         )
 
         txt_controls = build_txt2img_tab(
-            make_txt2img_handler(model_choice, txt2img_pipes),
+            make_txt2img_handler(model_choice.value, txt2img_pipes),
         )
 
         img_controls = build_img2img_tab(
-            make_img2img_handler(model_choice, img2img_pipes),
+            make_img2img_handler(model_choice.value, img2img_pipes),
         )
 
         build_upscaler_tab(
