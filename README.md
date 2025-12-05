@@ -1,3 +1,10 @@
+---
+title: sd-image-gen-toolkit
+app_file: src/sdgen/main.py
+sdk: gradio
+sdk_version: 6.0.2
+---
+
 # Stable Diffusion Image Generator
 
 A modular image generation system built on **HuggingFace Diffusers**, with support for multiple Stable Diffusion pipelines, configurable inference parameters, a clean **Gradio UI**, and a lightweight local **history/metadata store**.
