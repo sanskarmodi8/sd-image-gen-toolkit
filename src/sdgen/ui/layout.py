@@ -213,7 +213,11 @@ on the Model selceted and applied settings."
             value="SD1.5",
             label="Model",
         )
-        gr.Markdown("Use Turbo model if you prefer speed over quality.")
+        gr.Markdown(
+            "Use Turbo model if you prefer speed over quality. \
+SD1.5 produces much better results but takes 10 minutes on average \
+for generation on HF Spaces."
+        )
 
         txt_controls = build_txt2img_tab(
             make_txt2img_handler(model_choice.value, txt2img_pipes),
