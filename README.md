@@ -7,7 +7,7 @@ sdk_version: 6.0.2
 
 # Stable Diffusion Image Generator Toolkit
 
-![appdemo](.github_assets/demo.png)
+![appdemo](https://huggingface.co/spaces/SanskarModi/sd-image-gen-toolkit/blob/main/demo.png)
 
 A modular image generation system built on **HuggingFace Diffusers**, with support for multiple Stable Diffusion pipelines, configurable inference parameters, a clean **Gradio UI**, and a lightweight local **history/metadata store**.
 
