@@ -1,174 +1,153 @@
----
-title: stable-diffusion-image-generator
-app_file: src/sdgen/main.py
-sdk: gradio
-sdk_version: 3.50.2
----
-# 🎨 Stable Diffusion Image Generator
+# Stable Diffusion Image Generator
 
-AI system built using **Stable Diffusion (HuggingFace Diffusers)** and a modern **Gradio UI**.
-This project generates high-quality images from text prompts and includes advanced capabilities such as:
+A modular image generation system built on **HuggingFace Diffusers**, with support for multiple Stable Diffusion pipelines, configurable inference parameters, a clean **Gradio UI**, and a lightweight local **history/metadata store**.
 
-* Style presets
-* Image-to-Image generation
-* Super-resolution upscaling (RealESRGAN)
-* Prompt history & metadata tracking
-* Seed reproducibility
-* LoRA extension support
+The system supports **text-to-image**, **image-to-image**, and **super-resolution upscaling** using **Real-ESRGAN (NCNN)**.
+Designed with a focus on **extensibility**, **clean code**, and **practical deployment constraints** (CPU or low-memory environments).
 
 ---
 
-# Feature Details
+# Core Features
 
-## 1️⃣ **Text-to-Image Generation**
+## Text-to-Image Generation
 
-* Supports prompts & negative prompts
-* Adjustable steps, CFG scale, resolution
-* Seed for reproducibility
-* Preset selection panel
+* Stable Diffusion pipelines (SD 1.5, Turbo)
+* Adjustable **CFG scale**, **inference steps**, resolution, and seed
+* Structured metadata (JSON) for reproducibility
+* Style presets with recommended parameters
 
-## 2️⃣ **Image-to-Image (Img2Img)**
+## Image-to-Image (Img2Img)
 
-Transform uploaded images using prompts, e.g.:
+* Pipeline reuse to avoid model reload cost
+* Alpha-preserving prompt transforms
+* Configurable denoising strength
+* Deterministic or stochastic sampling
 
-* “Make this photo look cyberpunk”
-* “Convert this portrait into anime style”
-* “Turn into oil painting style”
+## Upscaling (Real-ESRGAN NCNN)
 
-## 3️⃣ **Super-Resolution Upscaling**
+* Lightweight **NCNN backend** (GPU not required)
+* Supports 2× and 4× scaling
+* Optional SD-upscaler backend planned
+* Minimal dependencies, fast on CPU
 
-Improve output quality significantly:
+## Prompt History & Metadata Tracking
 
-* 1.5×
-* 2×
-* 4×
-  Powered by **RealESRGAN**.
+* Local metadata index with atomic writes
+* Thumbnail + full-size image storage
+* JSON schema for portability
+* History browser UI
 
-## 4️⃣ **Style Presets**
+## Multi-Model Runtime Switching
 
-One-click artistic styles:
-
-* Anime
-* Realistic photography
-* Pixar / 3D
-* Oil painting
-* Cyberpunk neon
-
-## 5️⃣ **Prompt History & Metadata Tracking**
-
-Every generation stores:
-
-* Prompt
-* Negative prompt
-* Configuration
-* Seed
-* Generated image
-
-## 6️⃣ **LoRA Support**
-
-Load and use custom LoRA fine-tuned models:
-
-* Styles
-* Artists
-* Characters
-* Themes
+* Multiple pipelines loaded once
+* Selection at inference without reload
+* Shared tokenizer/encoder where possible
+* Warm-up logic for fast Turbo inference
 
 ---
 
-# 🧩 Project Architecture
+# Architecture Overview
 
 ```
-stable-diffusion-image-generator/
+src/sdgen/
 │
-├── app/
-│   ├── core/
-│   │   └── __init__.py
-│   │
-│   ├── pipeline.py
-│   │   # Loads & initializes Stable Diffusion (FP16, GPU, model configs)
-│   │
-│   ├── generator.py
-│   │   # Text-to-image inference logic
-│   │
-│   ├── img2img.py
-│   │   # Image-to-image transformation logic
-│   │
-│   ├── ui.py
-│   │   # Complete Gradio interface with multiple tabs:
-│   │   # Text2Img, Img2Img, Upscaling, History, About
-│   │
-│   ├── presets/
-│   │   ├── styles.py
-│   │       # Predefined artistic style presets (anime, cyberpunk, etc.)
-│   │
-│   ├── upscaler/
-│   │   ├── realesrgan.py
-│   │       # Super-resolution (1.5x, 2x, 4x)
-│   │
-│   ├── utils/
-│   │   ├── history.py     # Prompt history & metadata saving
-│   │   ├── seed.py        # Seed utilities for reproducibility
-│   │   ├── logger.py      # Central logging
-│   │
-│   ├── models/
-│   │   ├── metadata.py    # Data model for storing history entries
+├── sd/
+│   ├── pipeline.py          # pipeline loader, warmup, dtype/device logic
+│   ├── generator.py         # text-to-image
+│   ├── img2img.py           # image-to-image
+│   └── models.py            # config/metadata dataclasses
 │
-├── assets/
-│   ├── samples/           # Example generated images
-│   ├── lora/              # Custom LoRA models (optional)
+├── ui/
+│   ├── layout.py            # top-level UI composition
+│   └── tabs/                # individual UI components
 │
-├── main.py                # Entry point (launches Gradio app)
-├── requirements.txt       # All dependencies (pinned)
-├── LICENSE
-└── README.md
+├── presets/
+│   └── styles.py            # curated style presets
+│
+├── upscaler/
+│   └── realesrgan.py        # NCNN Real-ESRGAN backend
+│
+├── utils/
+│   ├── history.py           # persistence layer
+│   ├── common.py            # PIL/NumPy helpers
+│   └── logger.py            # structured logging
+│
+└── config/
+    ├── settings.py          # runtime config/env
+    └── paths.py             # project paths
 ```
 
 ---
 
-# ⚙️ Installation & Setup
+# Technical Highlights
 
-### Step 1 — Clone the Repo
+### Efficient CPU Deployment
 
-```
+HF Spaces have **no GPU**, 16 GB RAM.
+Generation speed is optimized via:
+
+* latent consistency (Turbo)
+* reduced step ranges
+* VAE tiling for memory distribution
+* attention slicing
+* deferring safety checker if private
+
+This reduces **CPU inference from ~220s → <70s** for 512px prompts, without unacceptable quality loss.
+
+### Multi-Pipeline Switching
+
+Both SD pipelines are instantiated once.
+The UI passes `model_choice` to the handler, which selects the correct pipeline **without rebuilding**.
+
+This avoids 4-7 GB reload cost per click.
+
+---
+
+# Local Installation
+
+### 1. Clone
+
+```bash
 git clone https://github.com/sanskarmodi8/stable-diffusion-image-generator
 cd stable-diffusion-image-generator
 ```
 
-### Step 2 — Create virtual environment
+### 2. Environment
 
-```
-python -m venv venv
-source venv/bin/activate        # Linux/Mac
-venv\Scripts\activate           # Windows
+```bash
+python -m venv .venv
+source .venv/bin/activate
 ```
 
-### Step 3 — Install PyTorch (GPU)
+### 3. Install Dependencies
 
-```
+Install PyTorch for GPU (leave if on CPU):
+
+```bash
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 ```
 
-### Step 4 — Install remaining dependencies
+Install core libs:
 
-```
+```bash
 pip install -r requirements.txt
 ```
 
-### Optional — Login to HuggingFace
+### 4. HuggingFace Login (optional)
 
-```
+```bash
 huggingface-cli login
 ```
 
 ---
 
-# ▶️ Running the App
+# Running
 
-```
-python main.py
+```bash
+python src/sdgen/main.py
 ```
 
-App will run at:
+UI available at:
 
 ```
 http://127.0.0.1:7860
@@ -176,57 +155,97 @@ http://127.0.0.1:7860
 
 ---
 
-# 🤝 Contributing
+# Roadmap (LoRA, QLoRA, and Training)
 
-This project follows **strict formatting and linting standards** to ensure clean, readable, and professional-quality code.
+**Update planned**: full LoRA loading and fine-tuning support.
 
+Scope includes:
 
-#### 1. Install pre-commit hooks
+### 1. LoRA Runtime Inference
 
-This ensures formatting and linting run **automatically** before every commit.
+* Load LoRA weights into existing UNet
+* Adjustable LoRA alpha/scaling
+* UI selector for LoRA checkpoints
+* Enable mixing multiple LoRAs
 
-```
+Implementation plan:
+
+* Attach `lora_attn_procs` to model
+* Discover `.safetensors` in `/assets/lora`
+* Store LoRA metadata in history
+* Persist alpha value and presets
+
+### 2. QLoRA Fine-Tuning
+
+* Train lightweight LoRA modules on GPUs (11GB VRAM OK)
+* Use parameter-efficient training
+* Merge adapters for export
+* Allow user fine-tuning via command line
+
+Stack:
+
+* accelerate
+* peft
+* bitsandbytes (if GPU available)
+
+UI tab planned:
+
+* dataset upload
+* config builder
+* start training
+* track loss, sample outputs
+
+**Why LoRA?**
+
+* Enables personal styles without training the full model
+* Reduces VRAM and compute cost by 50–200×
+* Industry-standard for SD customization
+
+---
+
+# Contributing
+
+This repo is configured with **pre-commit**:
+
+* black
+* ruff
+* isort
+* docstring linting (Google style)
+
+Install hooks:
+
+```bash
 pre-commit install
 ```
 
-#### 2. Format code manually (optional)
+Test formatting:
 
-```
-black .
-isort .
+```bash
 ruff check .
+black .
 ```
 
-#### 3. Create feature branches
-
-Follow standard naming:
+Branching convention:
 
 ```
-feature/<feature-name>
-fix/<bug-name>
+feat/<feature>
+fix/<issue>
 refactor/<module>
 ```
 
-#### 4. Commit messages
+---
 
-Use clear, conventional messages:
+# License
 
-```
-feat: add anime preset
-fix: resolve img2img prompt issue
-refactor: improve pipeline loading speed
-docs: update readme
-```
+This project is licensed under [MIT License](LICENSE).
 
 ---
 
-# 📄 License
+# Author
 
-Released under the [**MIT License**](LICENSE).
+**Sanskar Modi**
 
----
+Machine Learning Engineer
+Focused on production-grade ML systems.
 
-# ⭐ Author
-
-**[Sanskar Modi](https://github.com/sanskarmodi8)**
-AI Developer & Machine Learning Engineer
+GitHub: [https://github.com/sanskarmodi8](https://github.com/sanskarmodi8)
