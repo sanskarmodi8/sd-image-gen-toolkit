@@ -43,8 +43,14 @@ def _resolve_seed(value: Any) -> int | None:
 def _update_steps_and_cfg(model):
     """Upate steps based on the model."""
     if model == "Turbo":
-        return (gr.update(minimum=1, maximum=5, value=2, step=1), gr.update(minimum=0, maximum=0, value=0, step=0))
-    return (gr.update(minimum=10, maximum=30, value=20, step=1), 7.5)
+        return (
+            gr.update(minimum=1, maximum=5, value=2, step=1),
+            gr.update(minimum=0, maximum=0, value=0, step=0),
+        )
+    return (
+        gr.update(minimum=10, maximum=30, value=20, step=1),
+        gr.update(minimum=1, maximum=10, value=5, step=1),
+    )
 
 
 def _txt2img_handler(
@@ -195,7 +201,8 @@ def build_ui(txt2img_pipes: dict, img2img_pipes: dict) -> gr.Blocks:
     with gr.Blocks() as demo:
         gr.Markdown(
             "# Stable Diffusion Generator\n"
-            "Generation can take from few seconds to several minutes based on the Model selceted and applied settings."
+            "Generation can take from few seconds to several minutes based \
+on the Model selceted and applied settings."
         )
 
         model_choice = gr.Dropdown(
@@ -242,8 +249,9 @@ def build_ui(txt2img_pipes: dict, img2img_pipes: dict) -> gr.Blocks:
             "### Notes\n"
             "- Use **History → Refresh** if new entries do not appear.\n"
             "- Presets apply to both **Text → Image** and \
- **Image → Image** tabs.\n"
-            "- This app is hosted on CPU based HF Spaces, so generation may take some time, please be patient.\n"
+**Image → Image** tabs.\n"
+            "- This app is hosted on CPU based HF Spaces, so generation may \
+take some time, please be patient.\n"
         )
 
     return demo
