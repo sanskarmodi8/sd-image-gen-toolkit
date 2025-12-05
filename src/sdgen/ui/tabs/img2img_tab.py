@@ -88,7 +88,7 @@ the prompt more strictly. "
                     value="",
                     placeholder="Leave empty for random",
                 )
-                gr.Markdown("If using Turbo model, ensure steps*strength >=1")
+                gr.Markdown("If using Turbo model, ensure steps * strength >= 1")
                 generate_button = gr.Button("Generate")
 
             with gr.Column():
