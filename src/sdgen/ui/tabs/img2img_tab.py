@@ -52,7 +52,7 @@ def build_img2img_tab(handler: Callable[..., Tuple[Any, dict]]) -> Img2ImgContro
                 strength = gr.Slider(
                     minimum=0.1,
                     maximum=1.0,
-                    value=0.6,
+                    value=0.5,
                     step=0.05,
                     label="Strength",
                 )
@@ -88,7 +88,7 @@ the prompt more strictly. "
                     value="",
                     placeholder="Leave empty for random",
                 )
-
+                gr.Markdown("If using Turbo model, ensure steps*strength >=1")
                 generate_button = gr.Button("Generate")
 
             with gr.Column():

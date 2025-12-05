@@ -40,11 +40,11 @@ def _resolve_seed(value: Any) -> int | None:
         return None
 
 
-def _update_steps(model):
+def _update_steps_and_cfg(model):
     """Upate steps based on the model."""
     if model == "Turbo":
-        return gr.update(minimum=1, maximum=10, value=6, step=1)
-    return gr.update(minimum=10, maximum=30, value=20, step=1)
+        return (gr.update(minimum=1, maximum=5, value=2, step=1), gr.update(minimum=0, maximum=0, value=0, step=0))
+    return (gr.update(minimum=10, maximum=30, value=20, step=1), 7.5)
 
 
 def _txt2img_handler(
@@ -195,8 +195,7 @@ def build_ui(txt2img_pipes: dict, img2img_pipes: dict) -> gr.Blocks:
     with gr.Blocks() as demo:
         gr.Markdown(
             "# Stable Diffusion Generator\n"
-            "Clean, local Stable \
-            Diffusion toolkit."
+            "Generation can take from few seconds to several minutes based on the Model selceted and applied settings."
         )
 
         model_choice = gr.Dropdown(
@@ -207,6 +206,7 @@ def build_ui(txt2img_pipes: dict, img2img_pipes: dict) -> gr.Blocks:
             value="SD1.5",
             label="Model",
         )
+        gr.Markdown("Use Turbo model if you prefer speed over quality.")
 
         txt_controls = build_txt2img_tab(
             make_txt2img_handler(model_choice.value, txt2img_pipes),
@@ -228,14 +228,14 @@ def build_ui(txt2img_pipes: dict, img2img_pipes: dict) -> gr.Blocks:
         build_history_tab()
 
         model_choice.change(
-            fn=_update_steps,
+            fn=_update_steps_and_cfg,
             inputs=[model_choice],
-            outputs=[txt_controls.steps],
+            outputs=[txt_controls.steps, txt_controls.guidance],
         )
         model_choice.change(
-            fn=_update_steps,
+            fn=_update_steps_and_cfg,
             inputs=[model_choice],
-            outputs=[img_controls.steps],
+            outputs=[img_controls.steps, img_controls.guidance],
         )
 
         gr.Markdown(
@@ -243,9 +243,7 @@ def build_ui(txt2img_pipes: dict, img2img_pipes: dict) -> gr.Blocks:
             "- Use **History → Refresh** if new entries do not appear.\n"
             "- Presets apply to both **Text → Image** and \
  **Image → Image** tabs.\n"
-            "- Inference speed will be much faster on GPU \
-(This app is hosted on CPU based HF Spaces).\n"
-            "- Use Turbo model if you prefer speed over performance."
+            "- This app is hosted on CPU based HF Spaces, so generation may take some time, please be patient.\n"
         )
 
     return demo

@@ -8,7 +8,7 @@ from typing import Optional
 import torch
 from diffusers import (
     DPMSolverMultistepScheduler,
-    EulerAncestralDiscreteScheduler,
+    LCMScheduler,
     StableDiffusionPipeline,
 )
 
@@ -54,7 +54,7 @@ def load_pipeline(
     if scheduler is None:
         try:
             if "turbo" in model_id.lower():
-                scheduler = EulerAncestralDiscreteScheduler.from_pretrained(
+                scheduler = LCMScheduler.from_pretrained(
                     model_id,
                     subfolder="scheduler",
                 )
@@ -127,7 +127,7 @@ def warmup_pipeline(
         pipe(
             prompt=prompt,
             num_inference_steps=1,
-            guidance_scale=1.0,
+            guidance_scale=0.0,
             height=height,
             width=width,
             generator=generator,
