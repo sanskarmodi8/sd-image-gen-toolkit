@@ -6,6 +6,7 @@ so they can be imported directly from `sdgen.config`.
 
 from __future__ import annotations
 
+from .lora_urls import LORA_URLS
 from .paths import (
     ASSETS_ROOT,
     HISTORY_ENTRIES_DIR,
@@ -26,4 +27,5 @@ __all__ = [
     "HISTORY_THUMBS_DIR",
     "HISTORY_FULL_DIR",
     "LOGS_ROOT",
+    "LORA_URLS",
 ]

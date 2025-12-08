@@ -16,10 +16,10 @@ import torch
 from dotenv import load_dotenv
 
 from sdgen.config import AppSettings
-from sdgen.sd.img2img import prepare_img2img_pipeline
-from sdgen.sd.pipeline import load_pipeline, warmup_pipeline
+from sdgen.sd import load_pipeline, prepare_img2img_pipeline, warmup_pipeline
 from sdgen.ui import build_ui
 from sdgen.utils.logger import get_logger
+from sdgen.utils.lora_downloader import ensure_loras
 
 logger = get_logger(__name__)
 load_dotenv()
@@ -46,6 +46,12 @@ def main() -> None:
     model_id2 = settings.model_id2
 
     device = "cpu"
+
+    # Download LoRAs (runtime)
+    try:
+        ensure_loras()
+    except Exception as exc:
+        logger.warning("LoRA download issue: %s", exc)
 
     logger.info("Loading pipeline %s", model_id1)
     pipes = {

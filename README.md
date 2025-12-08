@@ -5,162 +5,179 @@ sdk: gradio
 sdk_version: 6.0.2
 ---
 
-# Stable Diffusion Image Generator Toolkit
+# Stable Diffusion Image Generation Toolkit
 
 ![appdemo](https://drive.google.com/uc?export=view&id=1dO2bnYmEEj3fNU0-dV692icUPSwyP93G)
 
-
-A modular image generation system built on **HuggingFace Diffusers**, with support for multiple Stable Diffusion pipelines, configurable inference parameters, a clean **Gradio UI**, and a lightweight local **history/metadata store**.
-
-The system supports **text-to-image**, **image-to-image**, and **super-resolution upscaling** using **Real-ESRGAN (NCNN)**.
-Designed with a focus on **extensibility**, **clean code**, and **practical deployment constraints** (CPU or low-memory environments).
-
-[Visit App](https://huggingface.co/spaces/SanskarModi/sd-image-gen-toolkit)
+[**Live Demo**](https://huggingface.co/spaces/SanskarModi/sd-image-gen-toolkit)
 
 ---
 
-# Core Features
+## Overview
 
-## Text-to-Image Generation
+A modular, lightweight image generation toolkit built on **Hugging Face Diffusers**, designed for **CPU-friendly deployment**, clean architecture, and practical usability.
 
-* Stable Diffusion pipelines (SD 1.5, Turbo)
-* Adjustable **CFG scale**, **inference steps**, resolution, and seed
-* Structured metadata (JSON) for reproducibility
-* Style presets with recommended parameters
-
-## Image-to-Image (Img2Img)
-
-* Pipeline reuse to avoid model reload cost
-* Alpha-preserving prompt transforms
-* Configurable denoising strength
-* Deterministic or stochastic sampling
-
-## Upscaling (Real-ESRGAN NCNN)
-
-* Lightweight **NCNN backend** (GPU not required)
-* Supports 2× and 4× scaling
-* Optional SD-upscaler backend planned
-* Minimal dependencies, fast on CPU
-
-## Prompt History & Metadata Tracking
-
-* Local metadata index with atomic writes
-* Thumbnail + full-size image storage
-* JSON schema for portability
-* History browser UI
-
-## Multi-Model Runtime Switching
-
-* Multiple pipelines loaded once
-* Selection at inference without reload
-* Shared tokenizer/encoder where possible
-* Warm-up logic for fast Turbo inference
+It supports **Text → Image**, **Image → Image**, and **Upscaling**, with a **preset system**, optional **LoRA adapters**, and a local **metadata history** for reproducibility.
 
 ---
 
-# Architecture Overview
+## Features
+
+### Text → Image
+- Stable Diffusion **1.5** and **Turbo**
+- Configurable prompt parameters:
+  - prompt / negative prompt
+  - steps
+  - guidance (CFG)
+  - resolution
+  - seed (optional)
+- JSON metadata output
+- Style presets for quick experimentation
+
+### Image → Image
+- Modify existing images via the SD Img2Img pipeline
+- Denoising strength control
+- Full parameter configuration
+- Shared preset system
+- History saved for reproducibility
+
+### Upscaling (Real-ESRGAN NCNN)
+- **2× and 4×** upscaling
+- NCNN backend (no GPU required)
+- Minimal dependencies
+- Fast on CPU environments (HF Spaces)
+
+### LoRA Adapter Support
+- Runtime loading of `.safetensors` adapters
+- Up to **two adapters** with independent weights
+- Alpha range `-2 → +2` per adapter
+- Automatic discovery under:
+```
+
+src/assets/loras/
 
 ```
-src/sdgen/
-│
-├── sd/
-│   ├── pipeline.py          # pipeline loader, warmup, dtype/device logic
-│   ├── generator.py         # text-to-image
-│   ├── img2img.py           # image-to-image
-│   └── models.py            # config/metadata dataclasses
-│
-├── ui/
-│   ├── layout.py            # top-level UI composition
-│   └── tabs/                # individual UI components
-│
-├── presets/
-│   └── styles.py            # curated style presets
-│
-├── upscaler/
-│   └── realesrgan.py        # NCNN Real-ESRGAN backend
-│
-├── utils/
-│   ├── history.py           # persistence layer
-│   ├── common.py            # PIL/NumPy helpers
-│   └── logger.py            # structured logging
-│
-└── config/
-    ├── settings.py          # runtime config/env
-    └── paths.py             # project paths
+- LoRA UI is **disabled for Turbo**, since Turbo does not benefit from LoRA injection
+
+### Metadata History
+Every generation stores:
+- model id
+- prompt + negative prompt
+- steps, cfg, resolution
+- seed
+- LoRA names + weights
+- timestamp
+
+All generated data is stored in a tree structure under:
+```
+
+src/assets/history/
+
 ```
 
 ---
 
-# Technical Highlights
+## Architecture
 
-### Efficient CPU Deployment
+```
 
-HF Spaces have **no GPU**, 16 GB RAM.
-Generation speed is optimized via:
+src/
+└── sdgen/
+├── sd/                     # Stable Diffusion runtime
+│   ├── pipeline.py         # model loading, device config
+│   ├── generator.py        # text-to-image inference
+│   ├── img2img.py          # image-to-image inference
+│   ├── lora_loader.py      # LoRA discovery & injection
+│   └── models.py           # typed config & metadata objects
+│
+├── ui/                     # Gradio UI components
+│   ├── layout.py           # composition root for UI
+│   └── tabs/               # modular tabs
+│       ├── txt2img_tab.py
+│       ├── img2img_tab.py
+│       ├── upscaler_tab.py
+│       ├── presets_tab.py
+│       └── history_tab.py
+│
+├── presets/                # curated basic presets
+│   └── styles.py           # preset registry
+│
+├── upscaler/               # Real-ESRGAN NCNN backend
+│   ├── upscaler.py         # interface + metadata
+│   └── realesrgan.py       # NCNN wrapper
+│
+├── utils/                  # shared utilities
+│   ├── history.py          # atomic storage format
+│   ├── common.py           # PIL helpers
+│   └── logger.py           # structured logging
+│
+└── config/                 # static configuration
+├── paths.py            # resolved directories
+└── settings.py         # environment settings
 
-* latent consistency (Turbo)
-* reduced step ranges
-* VAE tiling for memory distribution
-* attention slicing
-* deferring safety checker if private
-
-This reduces **CPU inference from ~220s → <70s** for 512px prompts, without unacceptable quality loss.
-
-### Multi-Pipeline Switching
-
-Both SD pipelines are instantiated once.
-The UI passes `model_choice` to the handler, which selects the correct pipeline **without rebuilding**.
-
-This avoids 4-7 GB reload cost per click.
+````
 
 ---
 
-# Local Installation
+## Presets (Included)
 
-### 1. Clone
+The project includes **four style presets**, each defining:
 
+- prompt
+- negative prompt
+
+These presets are neutral and work with both **SD1.5** and **Turbo**:
+
+| Name               | Style                     |
+|--------------------|----------------------------|
+| Realistic Photo    | 35mm, photorealistic       |
+| Anime              | clean anime illustration   |
+| Cinematic / Moody  | cinematic lighting/grain   |
+| Oil Painting       | classical oil painting     |
+
+Presets do **not include LoRA parameters**.  
+Users may manually combine presets with LoRA adapters.
+
+---
+
+## Installation
+
+### Clone
 ```bash
 git clone https://github.com/sanskarmodi8/stable-diffusion-image-generator
 cd stable-diffusion-image-generator
-```
+````
 
-### 2. Environment
+### Environment
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 ```
 
-### 3. Install Dependencies
-
-Install PyTorch for GPU (leave if on CPU):
-
-```bash
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-```
-
-Install core libs:
+### Install Dependencies (CPU)
 
 ```bash
 pip install -r requirements.txt
 pip install -e .
 ```
 
-### 4. HuggingFace Login (optional)
+### GPU (optional)
 
 ```bash
-huggingface-cli login
+pip install torch torchvision torchaudio \
+  --index-url https://download.pytorch.org/whl/cu121
 ```
 
 ---
 
-# Running
+## Run
 
 ```bash
 python src/sdgen/main.py
 ```
 
-UI available at:
+Open in browser:
 
 ```
 http://127.0.0.1:7860
@@ -168,191 +185,62 @@ http://127.0.0.1:7860
 
 ---
 
-# Roadmap (Focused, High-Impact Features)
+## Adding LoRA Models
 
-This project is under active development. The next milestones focus on **practical model customization and multi-model support**, optimized for **CPU-only deployment environments** such as Hugging Face Spaces.
+Place `.safetensors` files here:
 
-The roadmap is intentionally **lean** to maximize value within limited compute constraints.
-
----
-
-## 1. LoRA Runtime Inference (Core Feature)
-
-Add lightweight **Low-Rank Adaptation** support for Stable Diffusion pipelines without modifying base model weights.
-
-### Scope
-- Load external **`.safetensors` LoRA adapters** into UNet
-- Apply LoRA modules dynamically at inference
-- **Alpha (weight) slider** to control influence
-- **UI dropdown** for selecting LoRA adapters
-- **Automatic discovery** of LoRAs under:
 ```
-
 src/assets/loras/
-
 ```
 
-### Deliverables
-- `lora_loader.py` utility
-- integration into existing `load_pipeline()`
-- UI: LoRA selector + alpha parameter
-- history metadata with:
-- `lora_paths`
-- `lora_weights`
+They will be automatically detected and displayed in the UI (SD1.5 only).
+
+This repository **does not include** LoRA files.
 
 ---
 
-## 2. Multi-LoRA Mixing (2 adapters)
+## Third-Party LoRA Models
 
-Support mixing **two LoRA adapters** with independent weights.
+The app supports optional LoRA adapters.
+LoRA weights are **not included** and are **the property of their respective authors**.
 
-### Scope
-- Simple weighted merge at attention processors
-- UI:
-- LoRA A dropdown + alpha
-- LoRA B dropdown + alpha
-- Conflict handling for overlapping layers
+If you choose to download LoRA files automatically (see `lora_urls.py`), they are fetched directly from their original sources (**Civitai**).
 
-### Deliverables
-- `apply_lora_mix()` utility
-- metadata persistence
+This project does **not** redistribute LoRA weights.
+Refer to each model’s license on Civitai.
 
 ---
 
-## 3. SDXL-Turbo Pipeline Support
+## Development
 
-Add a **third runtime model**:
-```
-
-stabilityai/stable-diffusion-xl-base
-stabilityai/sdxl-turbo
-
-````
-
-### Scope
-- instantiate SDXL Turbo pipeline
-- auto configure:
-  - steps (1-4)
-  - CFG (0-1)
-- model selection integrated in UI
-- reproducible metadata
-
-### Notes
-SDXL Turbo is optimized for **fast generation** and works well on constrained environments with reduced steps.
-
----
-
-## 4. Enhanced Presets
-
-Presets currently define only prompts. Extend them to define **full recommended parameter sets** per use case.
-
-### Scope
-Each preset can define:
-- prompt
-- negative prompt
-- inference steps
-- CFG scale
-- resolution
-- recommended model
-- recommended LoRA (+alpha)
-
-### Example
-```json
-{
-  "preset": "Anime Portrait",
-  "prompt": "...",
-  "negative": "...",
-  "steps": 15,
-  "cfg": 6,
-  "width": 512,
-  "height": 768,
-  "model": "SD1.5",
-  "lora": {
-    "path": "anime_face.safetensors",
-    "alpha": 0.8
-  }
-}
-````
-
----
-
-## 5. Metadata Improvements
-
-Enhance metadata tracking for **reproducibility**.
-
-### Added Fields
-
-* `model_id`
-* `lora_names`
-* `lora_alphas`
-* `preset_used`
-* `resolution`
-* provenance timestamp
-
-This enables exact replication of generated images.
-
----
-
-## 6. Example LoRA & Training Scripts (No UI)
-
-Provide **self-contained example** to demonstrate training:
-
-* a Colab notebook for **LoRA fine-tuning**
-* a small 20-image dataset
-* training duration < 45 minutes on free GPU
-* export `.safetensors` file
-* use it in presets
-
-### Deliverables
-
-* `examples/train_lora.ipynb`
-* resulting LoRA stored at `assets/loras/example.safetensors`
-
----
-
-# Contributing
-
-This repo is configured with **pre-commit**:
-
-* black
-* ruff
-* isort
-* docstring linting (Google style)
-
-Install hooks:
+The repo uses `pre-commit` hooks for consistency:
 
 ```bash
 pre-commit install
 ```
 
-Test formatting:
+Tools:
+
+* ruff
+* black
+* isort
+
+Check formatting:
 
 ```bash
 ruff check .
 black .
 ```
 
-Branching convention:
+---
 
-```
-feat/<feature>
-fix/<issue>
-refactor/<module>
-```
+## License
+
+This project is licensed under the **MIT License**.
+See the [`LICENSE`](LICENSE) file.
 
 ---
 
-# License
+## Author 
 
-This project is licensed under [MIT License](LICENSE).
-
----
-
-# Author
-
-**Sanskar Modi**
-
-Machine Learning Engineer
-Focused on production-grade ML systems.
-
-GitHub: [https://github.com/sanskarmodi8](https://github.com/sanskarmodi8)
+[**Sanskar Modi**](https://github.com/sanskarmodi8)
