@@ -142,6 +142,7 @@ Install core libs:
 
 ```bash
 pip install -r requirements.txt
+pip install -e .
 ```
 
 ### 4. HuggingFace Login (optional)

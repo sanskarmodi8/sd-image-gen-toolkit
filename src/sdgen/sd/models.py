@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -79,6 +79,7 @@ class GenerationMetadata:
     id: Optional[str] = None
     thumbnail: Optional[str] = None
     full_image: Optional[str] = None
+    model_id: Optional[str] = None
 
     # Txt2Img / Img2Img
     prompt: Optional[str] = None
@@ -86,6 +87,8 @@ class GenerationMetadata:
     steps: Optional[int] = None
     guidance_scale: Optional[float] = None
     seed: Optional[int] = None
+    lora_names: Optional[List[str]] = None
+    lora_alphas: Optional[List[float]] = None
 
     # Img2Img only
     strength: Optional[float] = None

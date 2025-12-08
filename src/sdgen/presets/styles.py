@@ -1,65 +1,82 @@
-"""Preset configurations for text-to-image generation.
-
-This module defines a collection of named presets including prompt,
-negative prompt, sampler parameters, and recommended resolutions.
-"""
+"""Preset configurations."""
 
 from __future__ import annotations
 
 from typing import Any, Dict, List
 
-# Global preset registry: {preset_name: parameters}
 PRESETS: Dict[str, Dict[str, Any]] = {
-    "Realistic Photo": {
+    "Cinematic Realism": {
         "prompt": (
-            "ultra realistic, 35mm photography, \
-photorealistic, cinematic lighting"
+            "ultra realistic, cinematic lighting, 35mm film look, depth "
+            "of field, sharp focus, natural skin texture"
         ),
-        "negative_prompt": "low quality, blurry, deformed, extra limbs",
-        "tags": ["realistic", "photo"],
-    },
-    "Anime": {
-        "prompt": (
-            "high quality anime, clean lines, vibrant colors, \
-soft rim lighting, studio lighting"
+        "negative_prompt": (
+            "lowres, blurry, deformed anatomy, \
+extra limbs, oversaturated, jpeg artifacts"
         ),
-        "negative_prompt": "blurry, low detail, mutation, deformed",
-        "tags": ["anime", "stylized"],
-    },
-    "Cinematic / Moody": {
-        "prompt": (
-            "dramatic cinematic lighting, moody, film grain, \
-Kodak Portra, filmic color grading"
-        ),
-        "negative_prompt": "oversaturated, low detail, flat lighting",
-        "tags": ["cinematic", "moody"],
+        "steps": 24,
+        "cfg": 6.5,
+        "width": 768,
+        "height": 512,
+        "lora_A": "DetailTweak.safetensors",
+        "alpha_A": 0.8,
+        "lora_B": None,
+        "alpha_B": 0.0,
     },
     "Oil Painting / Classic Art": {
         "prompt": (
-            "oil painting, impasto brush strokes, classical \
+            "oil painting, impasto brush strokes, classical \ \
 lighting, Rembrandt style"
         ),
         "negative_prompt": "blurry, cartoonish, digital artifacts",
-        "tags": ["art", "oil", "painterly"],
+        "steps": 20,
+        "cfg": 7.5,
+        "width": 512,
+        "height": 512,
+        "lora_A": "DetailTweak.safetensors",
+        "alpha_A": 0.4,
+        "lora_B": None,
+        "alpha_B": 0.0,
     },
-    "Cyberpunk / Neon": {
+    "Manga Illustration": {
         "prompt": (
-            "cyberpunk city, neon reflections, wet streets, \
-high detail, synthwave aesthetic"
+            "manga illustration, clean line art, expressive pose, full "
+            "background, detailed composition"
         ),
-        "negative_prompt": "low detail, daytime, blurry",
-        "tags": ["cyberpunk", "neon"],
+        "negative_prompt": "badhandsv4, easyn, blurry line art",
+        "steps": 20,
+        "cfg": 7.0,
+        "width": 512,
+        "height": 704,
+        "lora_A": "MangaPanels.safetensors",
+        "alpha_A": 1.0,
+        "lora_B": None,
+        "alpha_B": 0.0,
+    },
+    "Anime Tarot": {
+        "prompt": (
+            "anime tarot card, ornate composition, symbolic character pose, "
+            "intricate patterns, layered design"
+        ),
+        "negative_prompt": "badhandsv4, flat background, simple layout",
+        "steps": 20,
+        "cfg": 6.0,
+        "width": 512,
+        "height": 704,
+        "lora_A": "AnimeTarotCards.safetensors",
+        "alpha_A": 1.0,
+        "lora_B": "DetailTweak.safetensors",
+        "alpha_B": -0.4,
     },
 }
 
 
 def get_preset(name: str) -> Dict[str, Any] | None:
-    """Return a shallow copy of a preset by name."""
+    """Return shallow copy of a preset config."""
     data = PRESETS.get(name)
     return dict(data) if data else None
 
 
 def list_presets() -> List[str]:
-    """List preset names in a stable UI order."""
-    # Avoid unexpected reordering: use insertion order
+    """Stable UI order."""
     return list(PRESETS.keys())

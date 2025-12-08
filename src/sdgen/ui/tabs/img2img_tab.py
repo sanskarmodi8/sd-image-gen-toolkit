@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Callable, Tuple
+from typing import Any, Callable, List, Optional, Tuple
 
 import gradio as gr
 
@@ -21,16 +21,11 @@ class Img2ImgControls:
     seed: gr.Textbox
 
 
-def build_img2img_tab(handler: Callable[..., Tuple[Any, dict]]) -> Img2ImgControls:
-    """Build the Image → Image tab and connect it to the provided handler.
-
-    Args:
-        handler: A callable accepting the UI inputs and returning:
-            (output_image, metadata_dict)
-
-    Returns:
-        Img2ImgControls: A container with references to UI components.
-    """
+def build_img2img_tab(
+    handler: Callable[..., Tuple[Any, dict]],
+    extra_inputs: Optional[List[gr.components.Component]] = None,
+) -> Img2ImgControls:
+    """Build the Image → Image tab and connect it to the provided handler."""
     with gr.Tab("Image → Image"):
         with gr.Row():
             with gr.Column():
@@ -88,7 +83,7 @@ the prompt more strictly. "
                     value="",
                     placeholder="Leave empty for random",
                 )
-                gr.Markdown("If using Turbo model, ensure steps * strength >= 1")
+
                 generate_button = gr.Button("Generate")
 
             with gr.Column():
@@ -100,17 +95,13 @@ the prompt more strictly. "
                     label="Metadata",
                 )
 
+        inputs = [input_image, prompt, negative, strength, steps, guidance, seed]
+        if extra_inputs:
+            inputs.extend(extra_inputs)
+
         generate_button.click(
             fn=handler,
-            inputs=[
-                input_image,
-                prompt,
-                negative,
-                strength,
-                steps,
-                guidance,
-                seed,
-            ],
+            inputs=inputs,
             outputs=[out_image, out_metadata],
         )
 

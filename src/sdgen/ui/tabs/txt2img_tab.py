@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Tuple
+from typing import Callable, List, Optional, Tuple
 
 import gradio as gr
 
@@ -24,15 +24,11 @@ class Txt2ImgControls:
     seed: gr.components.Textbox
 
 
-def build_txt2img_tab(handler: Callable[..., Tuple]) -> Txt2ImgControls:
-    """Construct the Text → Image tab and bind the Generate button.
-
-    Args:
-        handler: Function that performs txt2img and returns (image, metadata).
-
-    Returns:
-        A Txt2ImgControls instance containing references to all UI controls.
-    """
+def build_txt2img_tab(
+    handler: Callable[..., Tuple],
+    extra_inputs: Optional[List[gr.components.Component]] = None,
+) -> Txt2ImgControls:
+    """Construct the Text → Image tab and bind the Generate button."""
     with gr.Tab("Text → Image"):
         with gr.Row():
             with gr.Column():
@@ -95,9 +91,12 @@ the prompt more strictly. "
                 out_image = gr.Image(label="Output")
                 out_meta = gr.JSON(label="Metadata (JSON)")
 
+        inputs = [prompt, negative, steps, guidance, width, height, seed]
+        if extra_inputs:
+            inputs.extend(extra_inputs)
         generate_button.click(
             fn=handler,
-            inputs=[prompt, negative, steps, guidance, width, height, seed],
+            inputs=inputs,
             outputs=[out_image, out_meta],
         )
 

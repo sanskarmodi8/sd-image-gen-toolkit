@@ -6,8 +6,8 @@ sets up the UI, and launches the Gradio interface.
 
 from __future__ import annotations
 
-import sys
 import os
+import sys
 
 # for HF spaces
 sys.path.append(os.path.abspath("src"))
@@ -45,7 +45,7 @@ def main() -> None:
     model_id1 = settings.model_id1
     model_id2 = settings.model_id2
 
-    device = detect_device()
+    device = "cpu"
 
     logger.info("Loading pipeline %s", model_id1)
     pipes = {
